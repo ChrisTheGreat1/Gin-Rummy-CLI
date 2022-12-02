@@ -16,16 +16,30 @@ namespace _11242022_Gin_Rummy.Helpers
             return sortedHand;
         }
 
-        public static void DetectMelds(List<Card> hand)
+        public static List<Card> SortHandWithMeldGroupings(List<Card> hand)
         {
+            var sortedHand = hand.OrderBy(c => (!c.IsInMeld)).ThenBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
+            return sortedHand;
+        }
+
+        // TODO: refactor code duplication into methods
+        public static List<Card> DetectAndGroupByMelds(List<Card> hand)
+        {
+            foreach(var card in hand)
+            {
+                card.IsInMeld = false; // Reset all IsInMeld booleans in case player decided to break meld during discard
+            }
+
+            hand = SortHand(hand);
+
+            #region Check for runs of three or more
             List<List<Card>> cardsBySuit = new List<List<Card>>();
-            List<List<Card>> melds = new List<List<Card>>();
 
             cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Spades).ToList());
             cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Clubs).ToList());
             cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Hearts).ToList());
             cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Diamonds).ToList());
-
+           
             foreach (var cards in cardsBySuit)
             {
                 if (cards.Count() >= 3)
@@ -37,8 +51,7 @@ namespace _11242022_Gin_Rummy.Helpers
                         ranks.Add((int)card.Rank);
                     }
 
-                    //List<int> ranks = new List<int>(new int[] {4, 5, 7, 8});
-                    //bool isInOrder;
+                    //List<int> ranks = new List<int>(new int[] {1, 2, 3, 6, 10});
 
                     if (ranks.Count > 3)
                     {
@@ -64,7 +77,12 @@ namespace _11242022_Gin_Rummy.Helpers
 
                             if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
                             {
-                                melds.Add(cards);
+                                foreach(var card in cards)
+                                {
+                                        int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+                                        hand[findCardInHand].IsInMeld = true;
+                                }
+
                                 break;
                             };
                         }
@@ -74,13 +92,49 @@ namespace _11242022_Gin_Rummy.Helpers
                     {
                         if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
                         {
-                            melds.Add(cards);
+                            foreach (var card in cards)
+                            {
+                                    int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+                                    hand[findCardInHand].IsInMeld = true;
+                            }
                         };
                     }
                 }
             }
+            #endregion
+
+            #region Check for three/four of a kind
+            var handNotInMeld = hand.Where(c => (c.IsInMeld == false));
+            var groupByRank = handNotInMeld.GroupBy(c => (c.Rank));
+
+            foreach(var group in groupByRank)
+            {
+
+                if(group.Count() >= 3)
+                {
+                    foreach(var card in group)
+                    {
+                            int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+                            hand[findCardInHand].IsInMeld = true;
+                    }
+                }
+            }
+            #endregion
+
+            return SortHandWithMeldGroupings(hand);
         }
 
+        public static string HandToString(List<Card> hand)
+        {
+            var sb = new StringBuilder();
 
+            foreach (var card in hand)
+            {
+                sb.Append(card.ToString());
+                sb.Append(' ');
+            }
+
+            return sb.ToString();
+        }
     }
 }

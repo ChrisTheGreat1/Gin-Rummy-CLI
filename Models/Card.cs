@@ -18,6 +18,8 @@ namespace _11242022_Gin_Rummy.Models
 
         public Rank Rank { get; set; }
 
+        public bool IsInMeld { get; set; } = false;
+
         public override string ToString()
         {
             var sb = new StringBuilder();
