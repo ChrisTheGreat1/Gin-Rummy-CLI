@@ -11,12 +11,17 @@ const int HAND_SIZE = 10;
 var deck = DeckMethods.CreateDeck();
 var discardPile = new List<Card>();
 var pickedUpCard = new Card();
-char userInput = ' ';
-bool isPlayerOneTurn;
-bool didNonDealerPickupAtFirstChance = false;
-bool breakSwitch = false;
 
-deck = DeckMethods.ShuffleDeck(deck);
+char userInput = ' ';
+
+bool isPlayerOneTurn;
+bool canPlayerOneKnock = false;
+bool canPlayerTwoKnock = false;
+
+int handPlayerOneValue;
+int handPlayerTwoValue;
+
+DeckMethods.ShuffleDeck(deck);
 
 var handPlayerOne = new List<Card>();
 handPlayerOne.Capacity = 10;
@@ -40,6 +45,9 @@ deck.Remove(deck.Last());
 handPlayerOne = HandMethods.DetectAndGroupByMelds(handPlayerOne);
 handPlayerTwo = HandMethods.DetectAndGroupByMelds(handPlayerTwo);
 
+canPlayerOneKnock = HandMethods.CanPlayerKnock(handPlayerOne);
+canPlayerTwoKnock = HandMethods.CanPlayerKnock(handPlayerTwo);
+
 isPlayerOneTurn = DetermineDealer(); // If assigned true, player one is dealer. Otherwise player two is dealer.
 
 PrintHandsToConsole();
@@ -57,8 +65,6 @@ else
 
 isPlayerOneTurn = !isPlayerOneTurn;
 
-// TODO: cancel 2nd player from going if 1st went
-// First player's turn
 FirstTurnChanceToPickupFromDiscardPile();
 
 userInput = ' ';
@@ -69,9 +75,6 @@ userInput = ' ';
 // TODO: If the stock has run out and the next player does not want to take the discard,
 // the game ends at that point. Everyone scores the value of the cards remaining in their hands.
 
-// TODO: logic to prevent player from picking up card that they just discarded
-
-// TODO: logic to detect when player can knock (10 points or less)
 // TODO: logic for non-knocking player to combine cards with opponents hand after they lay down (need logic to also ensure 5-card runs can't be added onto)
 // TODO: determine winner when knock happens
 
@@ -86,6 +89,7 @@ userInput = ' ';
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 // TODO: colour coding for hand displays (also melds?)
+// TODO: unit testing for all methods
 
 
 while (deck.Count > 0)
@@ -94,16 +98,16 @@ while (deck.Count > 0)
 
     WriteLine(CurrentPlayerString() + " - Press 'd' if you wish to pick up from the discard pile, or 'n' if you wish to pick up a new card from the deck.");
     WriteLine();
-    WriteLine();
 
     // TODO: hotkey for displaying hand history
-    while (userInput != 'd' && userInput != 'n')
+    while (userInput != 'd' && userInput != 'D' && userInput != 'n' && userInput != 'N')
     {
         userInput = ReadKey().KeyChar;
 
         switch (userInput)
         {
             case 'd':
+            case 'D':
                 pickedUpCard = discardPile.Last();
                 discardPile.Remove(discardPile.Last());
                 WriteLine();
@@ -111,6 +115,7 @@ while (deck.Count > 0)
                 WriteLine("Picked up " + pickedUpCard.ToString());
                 break;
             case 'n':
+            case 'N':
                 pickedUpCard = deck.Last();
                 deck.Remove(deck.Last());
                 WriteLine();
@@ -131,7 +136,7 @@ while (deck.Count > 0)
 
     while (userInput != '0' && userInput != '1' && userInput != '2' && userInput != '3'
         && userInput != '4' && userInput != '5' && userInput != '6' && userInput != '7'
-        && userInput != '8' && userInput != '9' && userInput != 'h')
+        && userInput != '8' && userInput != '9' && userInput != 'h' && userInput != 'H')
     {
         userInput = ReadKey().KeyChar;
         WriteLine();
@@ -151,6 +156,7 @@ while (deck.Count > 0)
                 DiscardFromHand(isPlayerOneTurn, (int)Char.GetNumericValue(userInput));
                 break;
             case 'h':
+            case 'H':
                 discardPile.Add(pickedUpCard);
                 WriteLine();
                 WriteLine("Discarded " + discardPile.Last().ToString());
@@ -160,29 +166,37 @@ while (deck.Count > 0)
                 WriteLine("Invalid input.\n");
                 break;
         }
-
-        handPlayerOne = HandMethods.DetectAndGroupByMelds(handPlayerOne);
-        handPlayerTwo = HandMethods.DetectAndGroupByMelds(handPlayerTwo);
     }
 
     userInput = ' ';
     isPlayerOneTurn = !isPlayerOneTurn;
+
+    handPlayerOne = HandMethods.DetectAndGroupByMelds(handPlayerOne);
+    handPlayerTwo = HandMethods.DetectAndGroupByMelds(handPlayerTwo);
+
+    canPlayerOneKnock = HandMethods.CanPlayerKnock(handPlayerOne);
+    canPlayerTwoKnock = HandMethods.CanPlayerKnock(handPlayerTwo);
 }
 
 WriteLine();
-WriteLine("End of game reached.");
+WriteLine("End of deck reached.");
 
+// TODO: refactor so hands are always in same position of console. Clear console of old log messages
 void PrintHandsToConsole()
 {
     handPlayerOne = HandMethods.SortHandWithMeldGroupings(handPlayerOne);
     handPlayerTwo = HandMethods.SortHandWithMeldGroupings(handPlayerTwo);
 
     WriteLine();
+    WriteLine("---------------------------------------");
+    if (canPlayerTwoKnock) WriteLine("****PLAYER TWO CAN KNOCK****");
     WriteLine(HandMethods.HandToString(handPlayerTwo));
     WriteLine();
     WriteLine("Discard pile: " + discardPile.Last().ToString());
     WriteLine();
     WriteLine(HandMethods.HandToString(handPlayerOne));
+    if (canPlayerOneKnock) WriteLine("****PLAYER ONE CAN KNOCK****");
+    WriteLine("---------------------------------------");
     WriteLine("0  1  2  3  4  5  6  7  8  9");
     WriteLine();
 }
@@ -218,19 +232,22 @@ string CurrentPlayerString()
     else return "PLAYER TWO";
 }
 
-
 void FirstTurnChanceToPickupFromDiscardPile()
 {
-    while (userInput != 'd' && userInput != 'n' && breakSwitch == false)
+    bool didNonDealerPickupAtFirstChance = false;
+    bool breakSwitch = false;
+
+    while (userInput != 'd' && userInput != 'D' && userInput != 'n' && userInput != 'N' && breakSwitch == false)
     {
         userInput = ReadKey().KeyChar;
+        WriteLine();
 
         switch (userInput)
         {
             case 'd':
+            case 'D':
                 pickedUpCard = discardPile.Last();
                 discardPile.Remove(discardPile.Last());
-                WriteLine();
                 WriteLine();
                 WriteLine("Picked up " + pickedUpCard.ToString());
 
@@ -268,8 +285,9 @@ void FirstTurnChanceToPickupFromDiscardPile()
                     }
                 }
                 break;
+
             case 'n':
-                WriteLine();
+            case 'N':
                 WriteLine();
                 WriteLine(CurrentPlayerString() + " has chosen to pass.");
                 break;
@@ -289,11 +307,12 @@ void FirstTurnChanceToPickupFromDiscardPile()
     {
         WriteLine();
         WriteLine("Non-dealer chose to pass - dealer now has chance to pick up card from discard pile.");
+        WriteLine();
         WriteLine(CurrentPlayerString() + " - Press 'd' if you wish to pick up from the discard pile, or 'n' if you wish to pick up a new card from the deck.");
         WriteLine();
 
         // TODO: refactor into reusable method
-        while (userInput != 'd' && userInput != 'n' && breakSwitch == false)
+        while (userInput != 'd' && userInput != 'D' && userInput != 'n' && userInput != 'N' && breakSwitch == false)
         {
             userInput = ReadKey().KeyChar;
             WriteLine();
@@ -301,9 +320,9 @@ void FirstTurnChanceToPickupFromDiscardPile()
             switch (userInput)
             {
                 case 'd':
+                case 'D':
                     pickedUpCard = discardPile.Last();
                     discardPile.Remove(discardPile.Last());
-                    WriteLine();
                     WriteLine();
                     WriteLine("Picked up " + pickedUpCard.ToString());
 
@@ -341,7 +360,7 @@ void FirstTurnChanceToPickupFromDiscardPile()
                     }
                     break;
                 case 'n':
-                    WriteLine();
+                case 'N':
                     WriteLine();
                     WriteLine(CurrentPlayerString() + " has chosen to pass.");
                     break;
@@ -357,11 +376,7 @@ void FirstTurnChanceToPickupFromDiscardPile()
 
     handPlayerOne = HandMethods.DetectAndGroupByMelds(handPlayerOne);
     handPlayerTwo = HandMethods.DetectAndGroupByMelds(handPlayerTwo);
-}
 
-//foreach(var card in deck)
-//{
-//    Console.WriteLine(card.Suit + " " + card.Rank);
-//    //Console.WriteLine((int)card.Suit + " " + (int)card.Rank);
-//    Console.WriteLine(Environment.NewLine);
-//}
+    canPlayerOneKnock = HandMethods.CanPlayerKnock(handPlayerOne);
+    canPlayerTwoKnock = HandMethods.CanPlayerKnock(handPlayerTwo);
+}

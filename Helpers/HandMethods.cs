@@ -10,6 +10,36 @@ namespace _11242022_Gin_Rummy.Helpers
 {
     public static class HandMethods
     {
+        public static int CalculateHandValue(List<Card> hand)
+        {
+            hand = HandMethods.DetectAndGroupByMelds(hand); 
+
+            int handValue = 0;
+
+            foreach(var card in hand)
+            {
+                if(!card.IsInMeld)
+                {
+                    if(card.Rank == Rank.Jack || card.Rank == Rank.Queen || card.Rank == Rank.King) handValue += 10;
+                    else handValue += (int)card.Rank;
+                }
+            }
+
+            return handValue;
+        }
+
+        public static bool CanPlayerKnock(List<Card> hand)
+        {
+            if (CalculateHandValue(hand) <= 10) return true;
+            else return false;
+        }
+
+        public static bool DetectGin(List<Card> hand)
+        {
+            if (hand.All(c => c.IsInMeld)) return true;
+            else return false;
+        }
+
         public static List<Card> SortHand(List<Card> hand)
         {
             var sortedHand = hand.OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
@@ -18,7 +48,20 @@ namespace _11242022_Gin_Rummy.Helpers
 
         public static List<Card> SortHandWithMeldGroupings(List<Card> hand)
         {
-            var sortedHand = hand.OrderBy(c => (!c.IsInMeld)).ThenBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
+            var cardsInMelds = hand.Where(c => c.IsInMeld).ToList();
+            cardsInMelds = cardsInMelds.OrderBy(c => c.Rank).ThenBy(c => c.Suit).ToList();
+
+            var cardsNotInMelds = hand.Where(c => !c.IsInMeld).ToList();
+            cardsNotInMelds = cardsNotInMelds.OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
+
+            List<Card> sortedHand = new();
+            sortedHand.AddRange(cardsInMelds);
+            sortedHand.AddRange(cardsNotInMelds);
+
+            //var sortedHand = hand.OrderBy(c => !c.IsInMeld).ThenBy(c => c.Suit).ThenBy(c => c.Rank).ToList(); // Best for sorting cards not in melds.
+
+            //var sortedHand = hand.OrderBy(c => !c.IsInMeld).ThenBy(c => c.Rank).ThenBy(c => c.Suit).ToList(); // Best for sorting cards that are in melds.
+
             return sortedHand;
         }
 
@@ -105,7 +148,7 @@ namespace _11242022_Gin_Rummy.Helpers
 
             #region Check for three/four of a kind
             var handNotInMeld = hand.Where(c => (c.IsInMeld == false));
-            var groupByRank = handNotInMeld.GroupBy(c => (c.Rank));
+            var groupByRank = handNotInMeld.GroupBy(c => c.Rank);
 
             foreach(var group in groupByRank)
             {
