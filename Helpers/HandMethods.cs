@@ -10,10 +10,32 @@ namespace _11242022_Gin_Rummy.Helpers
 {
     public static class HandMethods
     {
+        public static List<Card> NonKnockerCombinesUnmatchedCardsWithKnockersMelds(List<Card> handKnocker, List<Card> handNonKnocker)
+        {
+            // TODO: fix bug where knockers hands are taken out of meld upon combining
+            List<Card> handOfMeldAndPotentialDiscards = handKnocker.Where(c => c.IsInMeld).ToList();
+            handOfMeldAndPotentialDiscards.AddRange(handNonKnocker.Where(c => !c.IsInMeld).ToList());
+
+            handOfMeldAndPotentialDiscards = DetectAndGroupByMelds(handOfMeldAndPotentialDiscards);
+
+            foreach(var card in handOfMeldAndPotentialDiscards)
+            {
+                if(card.IsInMeld == true && handNonKnocker.Contains(card))
+                {
+                    handNonKnocker[handNonKnocker.IndexOf(card)].IsInMeld = true;
+                }
+            }
+
+            return handNonKnocker;
+        }
+
+        /// <summary>
+        /// Calculate the value of the hand that is passed in as parameter. Hand needs to have melds detected before being passed in.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns>Integer value of the hand.</returns>
         public static int CalculateHandValue(List<Card> hand)
         {
-            hand = HandMethods.DetectAndGroupByMelds(hand); 
-
             int handValue = 0;
 
             foreach(var card in hand)
@@ -28,6 +50,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return handValue;
         }
 
+        /// <summary>
+        /// Determine if player can knock (ie. hand value is less than 10 points). Hand needs to have melds detected before being passed in.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns>Boolean denoting if hand is eligible to knock.</returns>
         public static bool CanPlayerKnock(List<Card> hand)
         {
             if (CalculateHandValue(hand) <= 10) return true;
@@ -48,24 +75,13 @@ namespace _11242022_Gin_Rummy.Helpers
 
         public static List<Card> SortHandWithMeldGroupings(List<Card> hand)
         {
-            var cardsInMelds = hand.Where(c => c.IsInMeld).ToList();
-            cardsInMelds = cardsInMelds.OrderBy(c => c.Rank).ThenBy(c => c.Suit).ToList();
-
-            var cardsNotInMelds = hand.Where(c => !c.IsInMeld).ToList();
-            cardsNotInMelds = cardsNotInMelds.OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
-
-            List<Card> sortedHand = new();
-            sortedHand.AddRange(cardsInMelds);
-            sortedHand.AddRange(cardsNotInMelds);
-
-            //var sortedHand = hand.OrderBy(c => !c.IsInMeld).ThenBy(c => c.Suit).ThenBy(c => c.Rank).ToList(); // Best for sorting cards not in melds.
-
-            //var sortedHand = hand.OrderBy(c => !c.IsInMeld).ThenBy(c => c.Rank).ThenBy(c => c.Suit).ToList(); // Best for sorting cards that are in melds.
+            var sortedHand = hand.OrderBy(c => !c.IsInMeld).ThenBy(c => c.Rank).ToList(); 
 
             return sortedHand;
         }
 
         // TODO: refactor code duplication into methods
+        // TODO: write documentation explaining the algorithm
         public static List<Card> DetectAndGroupByMelds(List<Card> hand)
         {
             foreach(var card in hand)
