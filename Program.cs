@@ -166,6 +166,8 @@ if(deck.Count == 0)
 WriteLine("End of game reached.\n");
 PrintHandsToConsole();
 
+// TODO: method to display score of hand
+
 // TODO: refactor so hands are always in same position of console. Clear console of old log messages
 void PrintHandsToConsole()
 {

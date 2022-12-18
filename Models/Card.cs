@@ -20,6 +20,10 @@ namespace _11242022_Gin_Rummy.Models
 
         public bool IsInMeld { get; set; } = false;
 
+        public int MeldGroupIdentifier { get; set; } = -1;
+
+        public bool IsMeld3or4ofKind { get; set; } = false;
+
         public override string ToString()
         {
             var sb = new StringBuilder();
