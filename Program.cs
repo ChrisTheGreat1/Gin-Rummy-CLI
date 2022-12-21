@@ -12,9 +12,15 @@ using static System.Console;
 
 const int HAND_SIZE = 10;
 
-var deck = CreateDeck();
-var discardPile = new List<Card>();
-var pickedUpCard = new Card();
+List<Card> deck = CreateDeck();
+List<Card> discardPile = new List<Card>();
+
+List<Card> handPlayerOne = new List<Card>();
+List<Card> handPlayerTwo = new List<Card>();
+handPlayerOne.Capacity = HAND_SIZE;
+handPlayerTwo.Capacity = HAND_SIZE;
+
+Card pickedUpCard = new Card();
 
 char userInput = ' ';
 
@@ -30,26 +36,10 @@ int playerTwoScore = 0;
 
 ShuffleDeck(deck);
 
-var handPlayerOne = new List<Card>();
-handPlayerOne.Capacity = HAND_SIZE;
+DealOutHands();
 
-var handPlayerTwo = new List<Card>();
-handPlayerTwo.Capacity = HAND_SIZE;
-
-// Deal hand
-for (int i = 0; i < HAND_SIZE; i++)
-{
-    handPlayerOne.Add(deck.Last());
-    deck.Remove(deck.Last());
-
-    handPlayerTwo.Add(deck.Last());
-    deck.Remove(deck.Last());
-}
-
-discardPile.Add(deck.Last());
-deck.Remove(deck.Last());
-
-SortHandsDetectMeldsDetermineIfKnockingEligible();
+SortHandsDetectMelds();
+DetermineIfKnockingEligible();
 
 isPlayerOneTurn = DetermineDealer(); // If assigned true, player one is dealer. Otherwise player two is dealer.
 
@@ -63,6 +53,8 @@ userInput = ' ';
 // TODO: player who won previous game becomes dealer
 
 // TODO: scoring code - First to get to 100 or more wins
+
+// TODO: update all methods so that input argument isn't directly modified
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 // TODO: colour coding for hand displays (also melds?)
@@ -129,7 +121,7 @@ while (deck.Count > 0 && !isGameOver)
                 DiscardFromHand(isPlayerOneTurn, (int)Char.GetNumericValue(userInput));
                 SortHandsDetectMelds();
                 DetectIfGinHasOccurred();
-                SortHandsDetectMeldsDetermineIfKnockingEligible();
+                DetermineIfKnockingEligible();
                 PromptPlayerToKnock();
                 break;
             case 'h':
@@ -139,7 +131,7 @@ while (deck.Count > 0 && !isGameOver)
 
                 SortHandsDetectMelds();
                 DetectIfGinHasOccurred();
-                SortHandsDetectMeldsDetermineIfKnockingEligible();
+                DetermineIfKnockingEligible();
                 PromptPlayerToKnock();
                 break;
             default:
@@ -253,7 +245,8 @@ void FirstTurnChanceToPickupFromDiscardPile()
         isPlayerOneTurn = !isPlayerOneTurn;
     }
 
-    SortHandsDetectMeldsDetermineIfKnockingEligible();
+    SortHandsDetectMelds();
+    DetermineIfKnockingEligible();
 
     void OfferChanceToPickUpFirstCardFromDiscardPile()
     {
@@ -398,11 +391,11 @@ void UpdatePlayerScoresAfterKnocking()
     }
 }
 
-void SortHandsDetectMeldsDetermineIfKnockingEligible()
+
+
+void DetermineIfKnockingEligible()
 {
     if (isGameOver) return;
-
-    SortHandsDetectMelds();
 
     canPlayerOneKnock = CanPlayerKnock(handPlayerOne);
     canPlayerTwoKnock = CanPlayerKnock(handPlayerTwo);
@@ -412,4 +405,19 @@ void SortHandsDetectMelds()
 {
     handPlayerOne = DetectAndGroupByMelds(handPlayerOne);
     handPlayerTwo = DetectAndGroupByMelds(handPlayerTwo);
+}
+
+void DealOutHands()
+{
+    for (int i = 0; i < HAND_SIZE; i++)
+    {
+        handPlayerOne.Add(deck.Last());
+        deck.Remove(deck.Last());
+
+        handPlayerTwo.Add(deck.Last());
+        deck.Remove(deck.Last());
+    }
+
+    discardPile.Add(deck.Last());
+    deck.Remove(deck.Last());
 }
