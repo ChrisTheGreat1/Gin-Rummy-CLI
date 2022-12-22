@@ -5,7 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace _11242022_Gin_Rummy.Helpers
@@ -152,13 +154,22 @@ namespace _11242022_Gin_Rummy.Helpers
 
         public static List<Card> DetermineBestHandMeldCombination(List<Card> hand)
         {
+            var _hand = hand;
+
+            foreach (var card in _hand)
+            {
+                card.IsInMeld = false;
+                card.MeldGroupIdentifier = -1;
+                card.IsMeld3or4ofKind = false;
+            }
+
             #region Gather sequence melds
             // Find run combinations: for all sets of size greater than and equal to 3, run the Enumberable.Range algorithm to see if sequence exists
             List<List<Card>> largestSequenceMelds = new();
-            List<List<Card>> cardsBySuit = new ();
+            List<List<Card>> cardsBySuit = new();
             //List<List<Card>> cardsBySuitOverflow = new List<List<Card>>();
 
-            var handOrderedBySuitThenRank = SortHand(hand);
+            var handOrderedBySuitThenRank = SortHand(_hand);
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Spades).ToList());
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Clubs).ToList());
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Hearts).ToList());
@@ -260,7 +271,7 @@ namespace _11242022_Gin_Rummy.Helpers
 
             List<List<Card>> largestSameRankMelds = new();
 
-            var handGroupedByRank = hand.GroupBy(c => c.Rank).ToList();
+            var handGroupedByRank = _hand.GroupBy(c => c.Rank).ToList();
 
             foreach (var rank in handGroupedByRank)
             {
@@ -362,151 +373,185 @@ namespace _11242022_Gin_Rummy.Helpers
 
                 for (int index = 0; index < sameRankList.Count; index++)
                 {
-                    List<Card> temp = new();
-                    temp.AddRange(copy);
-                    temp.RemoveAt(index);
-                    allPossibleMelds.Add(temp);
+                    List<Card> sameRankList_OneCardRemoved = new();
+                    sameRankList_OneCardRemoved.AddRange(copy);
+                    sameRankList_OneCardRemoved.RemoveAt(index);
+                    allPossibleMelds.Add(sameRankList_OneCardRemoved);
                 }
             }
 
             #endregion
 
+            if (allPossibleMelds.Count == 0)
+            {
+                return SortHandWithMeldGroupings(_hand);
+            }
+
             #region Determine all combinations of the possible melds
 
-            List<List<List<Card>>> meldCombinationsWithAllUniqueCards = new();
+            List<List<List<Card>>> meldCombinationsWithoutDuplicateCards = new();
 
+            // TODO: test with hand where only 1 meld exists
             //foreach(var meld in allPossibleMelds)
             for (int numMelds = 0; numMelds < allPossibleMelds.Count; numMelds++)
             {
-                //TODO: replace code with linq statement that runs an Except statement, if the statement is returned as size zero then group is completely unique? Or any/exists predicates?
-
-
                 // Need to find all other melds that contain the cards in "meld", so that they can be eliminated from potential combinations list
                 var meld = allPossibleMelds[numMelds];
 
-                //List<List<Card>> meldsThatContainSameCards = new();
-                List<int> meldsThatContainSameCards = new();
+                List<int> indexOfMeldsThatContainSameCards = new();
 
-                for(int index = 0; index < allPossibleMelds.Count; index++)
-                //foreach (var list in copyOfAllPossibleMelds)
+                for (int index = 0; index < allPossibleMelds.Count; index++)
                 {
                     var list = allPossibleMelds[index];
 
-                    foreach(var card in list)
+                    foreach (var card in list)
                     {
                         if (meld.Contains(card))
                         {
-                            meldsThatContainSameCards.Add(index);
+                            indexOfMeldsThatContainSameCards.Add(index);
                             break;
                         }
                     }
                 }
 
-                List<List<Card>> meldPairsNotUnique = new();
+                List<List<Card>> meldsOfDifferentCards = new();
 
-                for(int index = 0; index < allPossibleMelds.Count; index++)
+                for (int index = 0; index < allPossibleMelds.Count; index++)
                 {
-                    if (meldsThatContainSameCards.Contains(index)) continue;
+                    if (indexOfMeldsThatContainSameCards.Contains(index)) continue;
 
-                    meldPairsNotUnique.Add(allPossibleMelds[index]);
+                    meldsOfDifferentCards.Add(allPossibleMelds[index]);
                 }
 
-                List<List<Card>> uniqueMeldCombination = new();
 
-                if (meldPairsNotUnique.Count == 0)
+                if (meldsOfDifferentCards.Count == 0)
                 {
+                    List<List<Card>> uniqueMeldCombination = new();
                     uniqueMeldCombination.Add(meld);
-                    meldCombinationsWithAllUniqueCards.Add(uniqueMeldCombination);
+                    meldCombinationsWithoutDuplicateCards.Add(uniqueMeldCombination);
                     continue;
                 }
 
-                for (int index = 0; index < meldPairsNotUnique.Count; index++)
+                for (int index = 0; index < meldsOfDifferentCards.Count; index++)
                 {
-                    var guaranteedMeldPair = meldPairsNotUnique[index];
+                    var guaranteedMeldPair = meldsOfDifferentCards[index];
 
-                    uniqueMeldCombination.Clear();
+                    List<List<Card>> uniqueMeldCombination = new();
                     uniqueMeldCombination.Add(meld);
                     uniqueMeldCombination.Add(guaranteedMeldPair);
 
-                    List<List<Card>> potentialAdditionalPairings = new();
-                    foreach (var list in meldPairsNotUnique)
+                    List<List<Card>> additionalMelds = new();
+                    foreach (var list in meldsOfDifferentCards)
                     {
-                        potentialAdditionalPairings.Add(list);
+                        additionalMelds.Add(list);
                     }
 
-                    potentialAdditionalPairings.RemoveAt(index);
+                    additionalMelds.RemoveAt(index);
 
-                    List<int> nonPotentialPairingsIndexes = new();
+                    List<int> indexOfPotentialMeldsThatContainSameCards = new();
 
-                    for(int index2 = 0; index2 < potentialAdditionalPairings.Count; index2++)
+                    for (int index_ = 0; index_ < additionalMelds.Count; index_++)
                     {
-                        var potentialPair = potentialAdditionalPairings[index2];  
+                        var potentialAdditionalMeld = additionalMelds[index_];
 
-                        foreach(var card in potentialPair)
+                        foreach (var card in potentialAdditionalMeld)
                         {
-                            if(guaranteedMeldPair.Contains(card))
+                            if (guaranteedMeldPair.Contains(card))
                             {
-                                nonPotentialPairingsIndexes.Add(index2);
+                                indexOfPotentialMeldsThatContainSameCards.Add(index_);
                                 break;
                             }
                         }
                     }
 
-                    for(int index2 = 0; index2 < potentialAdditionalPairings.Count; index2++)
+                    for (int index_ = 0; index_ < additionalMelds.Count; index_++)
                     {
-                        if (nonPotentialPairingsIndexes.Contains(index2)) continue;
+                        if (indexOfPotentialMeldsThatContainSameCards.Contains(index_)) continue;
 
-                        uniqueMeldCombination.Add(potentialAdditionalPairings[index2]);
+                        uniqueMeldCombination.Add(additionalMelds[index_]);
                     }
 
-                    meldCombinationsWithAllUniqueCards.Add(uniqueMeldCombination);
+                    if (!meldCombinationsWithoutDuplicateCards.Contains(uniqueMeldCombination))
+                    {
+                        meldCombinationsWithoutDuplicateCards.Add(uniqueMeldCombination);
+                    }
                 }
             }
 
+            //// Group "meldCombinationsWithoutDuplicateCards" into sets containing the same number of melds. If there is more than one group,
+            //// remove groups that do not contain the highest number of melds (since the lowest possible hand value will always correspond
+            //// to a hand with the highest number of melds)
+
+            //var meldCombinationsWithoutDuplicateCards_Groups = meldCombinationsWithoutDuplicateCards.GroupBy(melds => melds.Count);
+
+            //int largestGroupSize = 0;
+            //foreach(var group in meldCombinationsWithoutDuplicateCards_Groups)
+            //{
+            //    if (group.Key <= largestGroupSize) continue;
+
+            //    largestGroupSize = group.Key;
+            //}
+
+            //meldCombinationsWithoutDuplicateCards = meldCombinationsWithoutDuplicateCards.Where(numOfMelds => (numOfMelds.Count == largestGroupSize)).ToList();
+
             #endregion
 
-            #region Set all IsInMeld properties of all cards to true
-            foreach (var listOfMelds in meldCombinationsWithAllUniqueCards) 
-            {
-                int meldGroupIdentifier = 0;
+            #region Determine non-melded cards and add them to list to create the complete melded & non-melded hand
 
-                foreach (var meld in listOfMelds)
+            int handValue;
+            int lowestHandValue = int.MaxValue;
+            List<List<Card>> bestMeldCombination = new();
+            List<Card> nonMeldedCards = new();
+
+            foreach (var meldCombination in meldCombinationsWithoutDuplicateCards)
+            {
+                var meldedCards = meldCombination.SelectMany(c => c).ToList();
+                var _nonMeldedCards = hand.Except(meldedCards).ToList();
+
+                handValue = CalculateHandValue(_nonMeldedCards);
+
+                if (handValue >= lowestHandValue) continue;
+
+                lowestHandValue = handValue;
+                bestMeldCombination = meldCombination;
+                nonMeldedCards = _nonMeldedCards;
+            }
+
+            // Set Card properties for the best hand
+            int meldGroupNum = 0;
+            foreach(var meld in bestMeldCombination)
+            {
+                var suit = meld[0].Suit;
+                var isMeldARun = meld.All(card => (card.Suit == suit));
+
+                if(!isMeldARun)
                 {
                     foreach(var card in meld)
                     {
-                        card.IsInMeld = true;
-                        //card.MeldGroupIdentifier = meldGroupIdentifier;
+                        card.IsMeld3or4ofKind = true;
                     }
-
-                    meldGroupIdentifier++;
                 }
-            }
-            #endregion
 
-            #region Determine non-melded cards and add them into meldCombinations lists
+                foreach (var card in meld)
+                {
+                    card.IsInMeld = true;
+                    card.MeldGroupIdentifier = meldGroupNum;
+                }
 
-            List<List<Card>> recreatedHands = new();
-
-            foreach (var listOfMelds in meldCombinationsWithAllUniqueCards)
-            {
-                var meldedCards = listOfMelds.SelectMany(c => c).ToList();
-                var nonMeldedCards = hand.Except(meldedCards).ToList(); // TODO: or could replace with intersection statement with original hand
-
-                var recreatedHand = meldedCards;
-                recreatedHand.AddRange(nonMeldedCards);
-
-                var test = recreatedHand;
+                meldGroupNum++;
             }
 
+            List<Card> bestHand = new();
+            bestHand.AddRange(bestMeldCombination.SelectMany(c => c).ToList());
+            bestHand.AddRange(nonMeldedCards);
 
             #endregion
 
-            List<Card> lowestHandScore = new();
-            return lowestHandScore;
+            return SortHandWithMeldGroupings(bestHand);
         }
 
 
-
+        // TODO: meld sequences can be larger than size 5
         // TODO: write documentation explaining the algorithm
         // TODO: need to prioritize making groups of 3 first. See edge case: 4s 5s 6s 7s 6c 7c 8c 6h 7h 7d. Maybe need algo that tries all combinations then SELECTS THE ONE WITH LOWEST HAND VALUE
         // 4s 5s 6s 7s 6c 7c 8c 6h 7h 7d
