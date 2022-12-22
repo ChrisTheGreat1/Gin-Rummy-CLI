@@ -25,8 +25,10 @@ namespace _11242022_Gin_Rummy.Helpers
 
             foreach (var group in groupsOfMelds)
             {
-                if (group.Count() >= 5) continue;
+                //if (group.Count() >= 5) continue;
 
+                // First check if non-knocker cards can be added to knockers run melds. Non-knocker can potentially discard more than
+                // 1 card on a sequence meld, whereas a maximum of 1 card can be discarded on a same-rank meld
                 if (group.First().IsMeld3or4ofKind == false)
                 {
                     var suit = group.First().Suit;
@@ -37,45 +39,88 @@ namespace _11242022_Gin_Rummy.Helpers
                     {
                         var combinationOfAllCards = handNonKnockerNonMelds_OfSameSuit;
                         combinationOfAllCards.AddRange(group);
-                        combinationOfAllCards = SortHand(combinationOfAllCards);
+                        combinationOfAllCards = SortHandBySuitThenRank(combinationOfAllCards);
+                        List<Card> meld = new();
 
-                        List<int> ranks = new();
-
-                        foreach (var card in combinationOfAllCards)
+                        // TODO: see if refactoring with GroupMeldsAlgorithm method is possible
+                        while (combinationOfAllCards.Count >= 3)
                         {
-                            ranks.Add((int)card.Rank);
-                        }
-
-                        // TODO: see if refactoring with GroupMelds method is possible
-                        while (ranks.Count > 3)
-                        {
-                            if (ranks[ranks.Count - 1] != (ranks[ranks.Count - 2] + 1) ||
-                            ranks[ranks.Count - 1] != (ranks[ranks.Count - 3] + 2))
+                            if (combinationOfAllCards[0].Rank != (combinationOfAllCards[1].Rank - 1) ||
+                                combinationOfAllCards[0].Rank != (combinationOfAllCards[2].Rank - 2))
                             {
-                                ranks.Remove(ranks.Last());
+                                combinationOfAllCards.Remove(combinationOfAllCards.First());
                             }
-
-                            if (ranks.Count < 3) break;
-
-                            if (ranks[0] != (ranks[1] - 1) ||
-                                ranks[0] != (ranks[2] - 2))
+                            else
                             {
-                                ranks.Remove(ranks.First());
-                            }
+                                meld = combinationOfAllCards.Take(3).ToList();
+                                combinationOfAllCards.RemoveRange(0, 3);
 
-                            if (ranks.Count < 3) break;
-
-                            if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
-                            {
-                                foreach (var rank in ranks)
+                                while (combinationOfAllCards.Count() > 0)
                                 {
-                                    int findCardInHand = handNonKnocker.FindIndex(c => ((int)c.Rank == rank) && (c.Suit == suit));
-                                    if (findCardInHand >= 0) handNonKnocker[findCardInHand].IsInMeld = true;
+                                    if (combinationOfAllCards.First().Rank == (meld.Last().Rank + 1))
+                                    {
+                                        meld.Add(combinationOfAllCards.First());
+                                        combinationOfAllCards.Remove(combinationOfAllCards.First());
+                                    }
+                                    else break;
                                 }
-
-                                break;
-                            };
+                            }
                         }
+                        // TODO: (END....) see if refactoring with GroupMeldsAlgorithm method is possible
+
+                        foreach (var card in meld)
+                        {
+                            if(handNonKnocker.Contains(card))
+                            {
+                                int findCardInHand = handNonKnocker.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+                                handNonKnocker[findCardInHand].IsInMeld = true;
+                            }
+                        }
+
+
+                        //// ----------original-------------------
+                        //var combinationOfAllCards = handNonKnockerNonMelds_OfSameSuit;
+                        //combinationOfAllCards.AddRange(group);
+                        //combinationOfAllCards = SortHand(combinationOfAllCards);
+
+                        //List<int> ranks = new();
+
+                        //foreach (var card in combinationOfAllCards)
+                        //{
+                        //    ranks.Add((int)card.Rank);
+                        //}
+
+
+                        ////while (ranks.Count > 3)
+                        //{
+                        //    if (ranks[ranks.Count - 1] != (ranks[ranks.Count - 2] + 1) ||
+                        //    ranks[ranks.Count - 1] != (ranks[ranks.Count - 3] + 2))
+                        //    {
+                        //        ranks.Remove(ranks.Last());
+                        //    }
+
+                        //    if (ranks.Count < 3) break;
+
+                        //    if (ranks[0] != (ranks[1] - 1) ||
+                        //        ranks[0] != (ranks[2] - 2))
+                        //    {
+                        //        ranks.Remove(ranks.First());
+                        //    }
+
+                        //    if (ranks.Count < 3) break;
+
+                        //    if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
+                        //    {
+                        //        foreach (var rank in ranks)
+                        //        {
+                        //            int findCardInHand = handNonKnocker.FindIndex(c => ((int)c.Rank == rank) && (c.Suit == suit));
+                        //            if (findCardInHand >= 0) handNonKnocker[findCardInHand].IsInMeld = true;
+                        //        }
+
+                        //        break;
+                        //    };
+                        //}
+                        //// ----------end original-------------------
                     }
                 }
 
@@ -135,7 +180,7 @@ namespace _11242022_Gin_Rummy.Helpers
             else return false;
         }
 
-        public static List<Card> SortHand(List<Card> hand)
+        public static List<Card> SortHandBySuitThenRank(List<Card> hand)
         {
             var sortedHand = hand.OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
             return sortedHand;
@@ -152,7 +197,9 @@ namespace _11242022_Gin_Rummy.Helpers
             return sortedHand;
         }
 
-        public static List<Card> DetermineBestHandMeldCombination(List<Card> hand)
+        // TODO: meld sequences can be larger than size 5
+        // TODO: write documentation explaining the algorithm
+        public static List<Card> DetermineMeldsInHand(List<Card> hand)
         {
             var _hand = hand;
 
@@ -169,7 +216,7 @@ namespace _11242022_Gin_Rummy.Helpers
             List<List<Card>> cardsBySuit = new();
             //List<List<Card>> cardsBySuitOverflow = new List<List<Card>>();
 
-            var handOrderedBySuitThenRank = SortHand(_hand);
+            var handOrderedBySuitThenRank = SortHandBySuitThenRank(_hand);
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Spades).ToList());
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Clubs).ToList());
             cardsBySuit.Add(handOrderedBySuitThenRank.Where(c => c.Suit == Suit.Hearts).ToList());
@@ -550,129 +597,124 @@ namespace _11242022_Gin_Rummy.Helpers
             return SortHandWithMeldGroupings(bestHand);
         }
 
+        // TODO: delete all commented out stuff
+        //public static List<Card> DetectAndGroupByMelds(List<Card> hand)
+        //{
+        //    foreach (var card in hand)
+        //    {
+        //        // Reset all meld properties in case player decided to break meld during discard
+        //        card.IsInMeld = false;
+        //        card.MeldGroupIdentifier = -1;
+        //        card.IsMeld3or4ofKind = false;
+        //    }
 
-        // TODO: meld sequences can be larger than size 5
-        // TODO: write documentation explaining the algorithm
-        // TODO: need to prioritize making groups of 3 first. See edge case: 4s 5s 6s 7s 6c 7c 8c 6h 7h 7d. Maybe need algo that tries all combinations then SELECTS THE ONE WITH LOWEST HAND VALUE
-        // 4s 5s 6s 7s 6c 7c 8c 6h 7h 7d
-        // Ac 2c 3c Qs Qc Qh 2s 2d 3s 3h
-        public static List<Card> DetectAndGroupByMelds(List<Card> hand)
-        {
-            foreach (var card in hand)
-            {
-                // Reset all meld properties in case player decided to break meld during discard
-                card.IsInMeld = false;
-                card.MeldGroupIdentifier = -1;
-                card.IsMeld3or4ofKind = false;
-            }
+        //    hand = SortHand(hand);
 
-            hand = SortHand(hand);
+        //    #region Check for runs of three or more
+        //    List<List<Card>> cardsBySuit = new List<List<Card>>();
 
-            #region Check for runs of three or more
-            List<List<Card>> cardsBySuit = new List<List<Card>>();
+        //    cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Spades).ToList());
+        //    cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Clubs).ToList());
+        //    cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Hearts).ToList());
+        //    cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Diamonds).ToList());
 
-            cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Spades).ToList());
-            cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Clubs).ToList());
-            cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Hearts).ToList());
-            cardsBySuit.Add(hand.Where(c => c.Suit == Suit.Diamonds).ToList());
+        //    int meldGroupIdentifier = 0;
 
-            int meldGroupIdentifier = 0;
+        //    foreach (var cards in cardsBySuit)
+        //    {
+        //        // TODO: bug where doesn't count meld of 234678 same suit
+        //        // TODO: refactor to use "continue" statement if condition isn't met, instead of nesting statements
+        //        if (cards.Count() >= 3)
+        //        {
+        //            List<int> ranks = new();
 
-            foreach (var cards in cardsBySuit)
-            {
-                // TODO: bug where doesn't count meld of 234678 same suit
-                // TODO: refactor to use "continue" statement if condition isn't met, instead of nesting statements
-                if (cards.Count() >= 3)
-                {
-                    List<int> ranks = new();
+        //            foreach (var card in cards)
+        //            {
+        //                ranks.Add((int)card.Rank);
+        //            }
 
-                    foreach (var card in cards)
-                    {
-                        ranks.Add((int)card.Rank);
-                    }
+        //            if (ranks.Count > 3)
+        //            {
+        //                while (ranks.Count > 3)
+        //                {
+        //                    if (ranks[ranks.Count - 1] != (ranks[ranks.Count - 2] + 1) ||
+        //                    ranks[ranks.Count - 1] != (ranks[ranks.Count - 3] + 2))
+        //                    {
+        //                        ranks.Remove(ranks.Last());
+        //                        cards.Remove(cards.Last());
+        //                    }
 
-                    if (ranks.Count > 3)
-                    {
-                        while (ranks.Count > 3)
-                        {
-                            if (ranks[ranks.Count - 1] != (ranks[ranks.Count - 2] + 1) ||
-                            ranks[ranks.Count - 1] != (ranks[ranks.Count - 3] + 2))
-                            {
-                                ranks.Remove(ranks.Last());
-                                cards.Remove(cards.Last());
-                            }
+        //                    if (ranks.Count < 3) break;
 
-                            if (ranks.Count < 3) break;
+        //                    if (ranks[0] != (ranks[1] - 1) ||
+        //                        ranks[0] != (ranks[2] - 2))
+        //                    {
+        //                        ranks.Remove(ranks.First());
+        //                        cards.Remove(cards.First());
+        //                    }
 
-                            if (ranks[0] != (ranks[1] - 1) ||
-                                ranks[0] != (ranks[2] - 2))
-                            {
-                                ranks.Remove(ranks.First());
-                                cards.Remove(cards.First());
-                            }
+        //                    if (ranks.Count < 3) break;
 
-                            if (ranks.Count < 3) break;
+        //                    if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
+        //                    {
+        //                        foreach (var card in cards)
+        //                        {
+        //                            int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+        //                            hand[findCardInHand].IsInMeld = true;
+        //                            hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
+        //                            hand[findCardInHand].IsMeld3or4ofKind = false;
+        //                        }
 
-                            if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
-                            {
-                                foreach (var card in cards)
-                                {
-                                    int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
-                                    hand[findCardInHand].IsInMeld = true;
-                                    hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
-                                    hand[findCardInHand].IsMeld3or4ofKind = false;
-                                }
+        //                        meldGroupIdentifier++;
 
-                                meldGroupIdentifier++;
+        //                        break;
+        //                    };
+        //                }
+        //            }
 
-                                break;
-                            };
-                        }
-                    }
+        //            else
+        //            {
+        //                if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
+        //                {
+        //                    foreach (var card in cards)
+        //                    {
+        //                        int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+        //                        hand[findCardInHand].IsInMeld = true;
+        //                        hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
+        //                        hand[findCardInHand].IsMeld3or4ofKind = false;
+        //                    }
 
-                    else
-                    {
-                        if (ranks.SequenceEqual(Enumerable.Range(ranks.First(), ranks.Count())))
-                        {
-                            foreach (var card in cards)
-                            {
-                                int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
-                                hand[findCardInHand].IsInMeld = true;
-                                hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
-                                hand[findCardInHand].IsMeld3or4ofKind = false;
-                            }
+        //                    meldGroupIdentifier++;
+        //                };
+        //            }
+        //        }
+        //    }
+        //    #endregion
 
-                            meldGroupIdentifier++;
-                        };
-                    }
-                }
-            }
-            #endregion
+        //    #region Check for three/four of a kind
+        //    var handNotInMeld = hand.Where(c => (c.IsInMeld == false));
+        //    var groupByRank = handNotInMeld.GroupBy(c => c.Rank);
 
-            #region Check for three/four of a kind
-            var handNotInMeld = hand.Where(c => (c.IsInMeld == false));
-            var groupByRank = handNotInMeld.GroupBy(c => c.Rank);
+        //    foreach (var group in groupByRank)
+        //    {
+        //        // TODO: refactor to use continue statement
+        //        if (group.Count() >= 3)
+        //        {
+        //            foreach (var card in group)
+        //            {
+        //                int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+        //                hand[findCardInHand].IsInMeld = true;
+        //                hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
+        //                hand[findCardInHand].IsMeld3or4ofKind = true;
+        //            }
 
-            foreach (var group in groupByRank)
-            {
-                // TODO: refactor to use continue statement
-                if (group.Count() >= 3)
-                {
-                    foreach (var card in group)
-                    {
-                        int findCardInHand = hand.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
-                        hand[findCardInHand].IsInMeld = true;
-                        hand[findCardInHand].MeldGroupIdentifier = meldGroupIdentifier;
-                        hand[findCardInHand].IsMeld3or4ofKind = true;
-                    }
+        //            meldGroupIdentifier++;
+        //        }
+        //    }
+        //    #endregion
 
-                    meldGroupIdentifier++;
-                }
-            }
-            #endregion
-
-            return SortHandWithMeldGroupings(hand);
-        }
+        //    return SortHandWithMeldGroupings(hand);
+        //}
 
         public static string HandToString(List<Card> hand)
         {

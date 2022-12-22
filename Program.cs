@@ -196,7 +196,7 @@ void DetectIfGinHasOccurred()
 {
     if (isPlayerOneTurn)
     {
-        if (CalculateHandValue(handPlayerOne) == 0)
+        if (DetectGin(handPlayerOne))
         {
             playerOneScore += 20;
             playerOneScore += CalculateHandValue(handPlayerTwo);
@@ -205,7 +205,7 @@ void DetectIfGinHasOccurred()
     }
     else
     {
-        if (CalculateHandValue(handPlayerTwo) == 0)
+        if (DetectGin(handPlayerTwo))
         {
             playerTwoScore += 20;
             playerTwoScore += CalculateHandValue(handPlayerOne);
@@ -220,6 +220,7 @@ void FirstTurnChanceToPickupFromDiscardPile()
     {
         WriteLine("\nMISDEAL - atleast one player can knock before any cards have been exchanged.\n");
         isGameOver = true;
+        // TODO: ensure no points assigned on a misdeal
         return;
     }
 
@@ -237,7 +238,7 @@ void FirstTurnChanceToPickupFromDiscardPile()
     // If non-dealer passed up first chance at discard pile, dealer is given chance to pickup the card
     if (!didNonDealerPickupAtFirstChance)
     {
-        WriteLine("\nNon-dealer chose to pass - dealer now has chance to pick up card from discard pile.\n");
+        WriteLine("Non-dealer chose to pass - dealer now has chance to pick up card from discard pile.\n");
         WriteLine(CurrentPlayerString(isPlayerOneTurn) + " - Press 'd' if you wish to pick up from the discard pile, or 'n' if you wish to pass.\n");
 
         OfferChanceToPickUpFirstCardFromDiscardPile();
@@ -403,8 +404,8 @@ void DetermineIfKnockingEligible()
 
 void SortHandsDetectMelds()
 {
-    handPlayerOne = DetectAndGroupByMelds(handPlayerOne);
-    handPlayerTwo = DetectAndGroupByMelds(handPlayerTwo);
+    handPlayerOne = DetermineMeldsInHand(handPlayerOne);
+    handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
 }
 
 void DealOutHands()
