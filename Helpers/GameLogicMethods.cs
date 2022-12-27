@@ -11,8 +11,8 @@ namespace _11242022_Gin_Rummy.Helpers
         public static bool DetermineDealer()
         {
             var random = new Random();
-            if (random.NextDouble() >= 0.5) return true;
-            else return false;
+            if (random.NextDouble() >= 0.5) return true; // If assigned true, player one is dealer. Otherwise player two is dealer.
+            else return false; 
         }
 
         public static string CurrentPlayerString(bool isPlayerOneTurn)

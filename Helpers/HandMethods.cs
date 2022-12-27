@@ -41,16 +41,19 @@ namespace _11242022_Gin_Rummy.Helpers
                         combinationOfAllCards.AddRange(group);
                         combinationOfAllCards = SortHandBySuitThenRank(combinationOfAllCards);
 
-                        var meld = ExtractLongestSequence(combinationOfAllCards);
+                        var melds = ExtractLongestSequence(combinationOfAllCards);
 
-                        // If the meld contains any non-knocker non-meld cards, update the card properties to denote the card as belonging to a meld.
-                        // This will cause the discard to not be counted when calculating the non-knocker's hand value
-                        foreach (var card in meld)
+                        foreach(var meld in melds)
                         {
-                            if (handNonKnocker.Contains(card))
+                            // If the meld contains any non-knocker non-meld cards, update the card properties to denote the card as belonging to a meld.
+                            // This will cause the discard to not be counted when calculating the non-knocker's hand value
+                            foreach (var card in meld)
                             {
-                                int findCardInHand = handNonKnockerAfterDiscardingOntoOpponentMelds.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
-                                handNonKnockerAfterDiscardingOntoOpponentMelds[findCardInHand].IsInMeld = true;
+                                if (handNonKnocker.Contains(card))
+                                {
+                                    int findCardInHand = handNonKnockerAfterDiscardingOntoOpponentMelds.FindIndex(c => (c.Rank == card.Rank) && (c.Suit == card.Suit));
+                                    handNonKnockerAfterDiscardingOntoOpponentMelds[findCardInHand].IsInMeld = true;
+                                }
                             }
                         }
                     }
@@ -417,17 +420,20 @@ namespace _11242022_Gin_Rummy.Helpers
             // Loop through each card suit grouping and pick out the longest length sequence melds for each suit
             foreach (var suitCards in handSortedBySuit)
             {
-                var meld = ExtractLongestSequence(suitCards);
+                var melds = ExtractLongestSequence(suitCards);
 
-                if (meld.Count >= 3) longestSequenceMelds.Add(meld);
+                foreach(var meld in melds)
+                {
+                    if (meld.Count >= 3) longestSequenceMelds.Add(meld);
+                }
             }
 
             return longestSequenceMelds;
         }
 
-        private static List<Card> ExtractLongestSequence(List<Card> sameSuitCards)
+        private static List<List<Card>> ExtractLongestSequence(List<Card> sameSuitCards)
         {
-            List<Card> meld = new();
+            List<List<Card>> melds = new();
 
             // Minimum meld size is 3 cards so only continue the loop while atleast 3 cards still remain
             while (sameSuitCards.Count >= 3)
@@ -440,13 +446,15 @@ namespace _11242022_Gin_Rummy.Helpers
                 }
                 else
                 {
+                    List<Card> meld = new();
+
                     // If the first 3 cards in the list make a sequence, add them to the meld variable then remove them from the list
                     meld = sameSuitCards.Take(3).ToList();
                     sameSuitCards.RemoveRange(0, 3);
 
                     // Check the remaining cards in the list. If they are also part of the sequence, add them to meld variable and remove from the list.
                     // Continue this loop while there is atleast 1 card left and until a card that is not in sequence is found
-                    while (sameSuitCards.Count() > 0)
+                    while (sameSuitCards.Count > 0)
                     {
                         if (sameSuitCards.First().Rank == (meld.Last().Rank + 1))
                         {
@@ -455,10 +463,12 @@ namespace _11242022_Gin_Rummy.Helpers
                         }
                         else break;
                     }
-                }
+
+                    melds.Add(meld);
+                }                
             }
 
-            return meld;
+            return melds;
         }
 
         public static string HandToString(List<Card> hand)

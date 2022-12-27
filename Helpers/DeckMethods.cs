@@ -35,7 +35,7 @@ namespace _11242022_Gin_Rummy.Helpers
             var random = new Random();
             Card tempCard = new();
 
-            for(int i = deck.Count() - 1; i > 0; i--)
+            for(int i = deck.Count - 1; i > 0; i--)
             {
                 int j = random.Next(i + 1);
                 tempCard = deck[i];
