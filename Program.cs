@@ -17,9 +17,18 @@ int playerOneScore = 0;
 int playerTwoScore = 0;
 int previousWinner = 0;
 
-while ( (playerOneScore < 100) && (playerTwoScore < 100))
+//while ((playerOneScore < 100) && (playerTwoScore < 100))
+//{
+//    var gameInfo = GameRound.PlayRound(previousWinner);
+
+//    playerOneScore += gameInfo[0];
+//    playerTwoScore += gameInfo[1];
+//    previousWinner = gameInfo[2];
+//}
+
+while ((playerOneScore < 100) && (playerTwoScore < 100))
 {
-    var gameInfo = GameRound.PlayRound(previousWinner);
+    var gameInfo = GameRoundSimpleAgent.PlayRound(previousWinner);
 
     playerOneScore += gameInfo[0];
     playerTwoScore += gameInfo[1];
