@@ -35,7 +35,7 @@ int previousWinner = 0;
 //    previousWinner = gameInfo[2];
 //}
 
-for(int i = 0; i < 100; i++)
+for(int i = 0; i < 1000; i++)
 {
     var gameInfo = GameRoundSimpleAgentVsSelf.PlayRound(previousWinner);
 
