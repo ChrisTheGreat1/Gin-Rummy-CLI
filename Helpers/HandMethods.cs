@@ -169,6 +169,10 @@ namespace _11242022_Gin_Rummy.Helpers
             // Gather all possible combinations of melds (with no duplicated cards) into a list
             var meldCombinations = DetermineAllCombinationsOfMelds(allPossibleMelds);
 
+            // Maximum number of melds possible in hand is 3
+            // Filter out higher meld counts to prevent bugs, particularly during SimpleAgent play when 11 cards are being evaluated in a hand
+            meldCombinations = meldCombinations.Where(m => m.Count < 4).ToList(); 
+
             // Evaluate the point values for all possible meld combinations and return the best possible hand
             var bestHand = DetermineBestPossibleHand(_hand, meldCombinations);
 

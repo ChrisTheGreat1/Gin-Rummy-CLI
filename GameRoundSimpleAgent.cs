@@ -107,7 +107,7 @@ namespace _11242022_Gin_Rummy
             PrintHandsToConsole();
             PrintScoresToConsole();
 
-            WriteLine("Press any key to continue.");
+            WriteLine("Press any key to continue.\n");
             ReadKey();
 
             List<int> endOfGameInfo = new();
@@ -125,9 +125,19 @@ namespace _11242022_Gin_Rummy
             handPlayerTwo.Add(discardPileCard);
             handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
 
-            // TODO: implement guard clauses for when agent obtains gin (nonMeldedCards.Count is 0)
-
             var nonMeldedCards = handPlayerTwo.Where(c => !c.IsInMeld).ToList();
+
+            // If hand is in gin, remove a card from the players hand
+            if (nonMeldedCards.Count == 0)
+            {
+                var groupedMelds = handPlayerTwo.GroupBy(c => c.MeldGroupIdentifier).ToList();
+
+                var largestMeldGroup = groupedMelds.Where(m => (m.Count() > 3)).First(); // Find a meld with more than 3 cards in it
+
+                handPlayerTwo.Remove(largestMeldGroup.Last());
+
+                return;
+            }
 
             // If card from discard pile doesn't form a meld, pick up a card from the deck
             if (nonMeldedCards.Contains(discardPileCard))
@@ -144,6 +154,19 @@ namespace _11242022_Gin_Rummy
                 handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
 
                 nonMeldedCards = handPlayerTwo.Where(c => !c.IsInMeld).ToList();
+
+                // If hand is in gin, remove a card from the players hand
+                if (nonMeldedCards.Count == 0)
+                {
+                    var groupedMelds = handPlayerTwo.GroupBy(c => c.MeldGroupIdentifier).ToList();
+
+                    var largestMeldGroup = groupedMelds.Where(m => (m.Count() > 3)).First(); // Find a meld with more than 3 cards in it
+
+                    handPlayerTwo.Remove(largestMeldGroup.Last());
+
+                    return;
+                }
+
                 var highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
 
                 handPlayerTwo.Remove(highestDeadwoodCard);
@@ -151,6 +174,7 @@ namespace _11242022_Gin_Rummy
 
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " discarded " + highestDeadwoodCard.ToString() + "\n");
             }
+
             // If card did complete a meld, discard the highest deadwood value non-melded card remaining in hand
             else
             {
