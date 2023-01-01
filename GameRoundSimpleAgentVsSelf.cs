@@ -13,7 +13,7 @@ using static System.Console;
 
 namespace _11242022_Gin_Rummy
 {
-    public static class GameRoundSimpleAgent
+    public static class GameRoundSimpleAgentVsSelf
     {
         private const int HAND_SIZE = 10;
 
@@ -78,16 +78,16 @@ namespace _11242022_Gin_Rummy
             {
                 PrintHandsToConsole();
 
-                if (isPlayerOneTurn)
-                {
-                    HumanPlayerChooseWhereToPickUpFrom();
+                //if (isPlayerOneTurn)
+                //{
+                //    HumanPlayerChooseWhereToPickUpFrom();
 
-                    HumanPlayerChooseDiscard();
-                }
-                else
-                {
-                    SimpleAgentPlaysHand();
-                }
+                //    HumanPlayerChooseDiscard();
+                //}
+                //else
+                //{
+                    SimpleAgentPlaysHandVsSelf(isPlayerOneTurn);
+                //}
 
                 isPlayerOneTurn = !isPlayerOneTurn;
             }
@@ -108,7 +108,7 @@ namespace _11242022_Gin_Rummy
             PrintScoresToConsole();
 
             WriteLine("Press any key to continue.\n");
-            ReadKey();
+            //ReadKey();
 
             List<int> endOfGameInfo = new();
             endOfGameInfo.Add(playerOneRoundScore);
@@ -118,23 +118,34 @@ namespace _11242022_Gin_Rummy
             return endOfGameInfo;
         }
 
-        private static void SimpleAgentPlaysHand()
+        private static void SimpleAgentPlaysHandVsSelf(bool isPlayerOneTurn)
         {
             var discardPileCard = discardPile.Last();
 
-            handPlayerTwo.Add(discardPileCard);
-            handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
+            List<Card> _hand = new List<Card>();
 
-            var nonMeldedCards = handPlayerTwo.Where(c => !c.IsInMeld).ToList();
+            if (isPlayerOneTurn)
+            {
+                _hand = handPlayerOne;
+            }
+            else
+            {
+                _hand = handPlayerTwo;
+            }
+
+            _hand.Add(discardPileCard);
+            _hand = DetermineMeldsInHand(_hand);
+
+            var nonMeldedCards = _hand.Where(c => !c.IsInMeld).ToList();
 
             // If hand is in gin, remove a card from the players hand
             if (nonMeldedCards.Count == 0)
             {
-                var groupedMelds = handPlayerTwo.GroupBy(c => c.MeldGroupIdentifier).ToList();
+                var groupedMelds = _hand.GroupBy(c => c.MeldGroupIdentifier).ToList();
 
                 var largestMeldGroup = groupedMelds.Where(m => (m.Count() > 3)).First(); // Find a meld with more than 3 cards in it
 
-                handPlayerTwo.Remove(largestMeldGroup.Last());
+                _hand.Remove(largestMeldGroup.Last());
 
                 return;
             }
@@ -142,7 +153,7 @@ namespace _11242022_Gin_Rummy
             // If card from discard pile doesn't form a meld, pick up a card from the deck
             if (nonMeldedCards.Contains(discardPileCard))
             {
-                handPlayerTwo.Remove(discardPileCard);
+                _hand.Remove(discardPileCard);
 
                 pickedUpCard = deck.Last();
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " has chosen to pick up a card from the deck.\n");
@@ -150,26 +161,26 @@ namespace _11242022_Gin_Rummy
 
                 deck.Remove(deck.Last());
 
-                handPlayerTwo.Add(pickedUpCard);
-                handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
+                _hand.Add(pickedUpCard);
+                _hand = DetermineMeldsInHand(_hand);
 
-                nonMeldedCards = handPlayerTwo.Where(c => !c.IsInMeld).ToList();
+                nonMeldedCards = _hand.Where(c => !c.IsInMeld).ToList();
 
                 // If hand is in gin, remove a card from the players hand
                 if (nonMeldedCards.Count == 0)
                 {
-                    var groupedMelds = handPlayerTwo.GroupBy(c => c.MeldGroupIdentifier).ToList();
+                    var groupedMelds = _hand.GroupBy(c => c.MeldGroupIdentifier).ToList();
 
                     var largestMeldGroup = groupedMelds.Where(m => (m.Count() > 3)).First(); // Find a meld with more than 3 cards in it
 
-                    handPlayerTwo.Remove(largestMeldGroup.Last());
+                    _hand.Remove(largestMeldGroup.Last());
 
                     return;
                 }
 
                 var highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
 
-                handPlayerTwo.Remove(highestDeadwoodCard);
+                _hand.Remove(highestDeadwoodCard);
                 discardPile.Add(highestDeadwoodCard);
 
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " discarded " + highestDeadwoodCard.ToString() + "\n");
@@ -180,12 +191,21 @@ namespace _11242022_Gin_Rummy
             {
                 var highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
 
-                handPlayerTwo.Remove(highestDeadwoodCard);
+                _hand.Remove(highestDeadwoodCard);
                 discardPile.Remove(discardPileCard);
                 discardPile.Add(highestDeadwoodCard);
 
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " picked up " + discardPileCard.ToString() + " from the discard pile.\n");
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " discarded " + highestDeadwoodCard.ToString() + "\n");
+            }
+
+            if (isPlayerOneTurn)
+            {
+                handPlayerOne = _hand;
+            }
+            else
+            {
+                handPlayerTwo = _hand;
             }
 
             // TODO: consider optimizing by removing unnecessary hand method calls when it's not the players turn
@@ -351,7 +371,7 @@ namespace _11242022_Gin_Rummy
             WriteLine(CurrentPlayerString(isPlayerOneTurn) + " (NON-DEALER) - Press 'd' if you wish to pick up from the discard pile, or 'n' if you wish to pass without discarding.\n");
 
             bool didNonDealerPickupAtFirstChance = false;
-            bool breakSwitch = false;
+            //bool breakSwitch = false;
 
             OfferChanceToPickUpFirstCardFromDiscardPile();
 
@@ -374,113 +394,135 @@ namespace _11242022_Gin_Rummy
 
             void OfferChanceToPickUpFirstCardFromDiscardPile()
             {
-                if (isPlayerOneTurn)
+                //if (isPlayerOneTurn)
+                //{
+                //    while (userInput != 'd' && userInput != 'D' && userInput != 'n' && userInput != 'N' && breakSwitch == false)
+                //    {
+                //        userInput = ReadKey().KeyChar;
+                //        WriteLine();
+
+                //        switch (userInput)
+                //        {
+                //            case 'd':
+                //            case 'D':
+                //                pickedUpCard = discardPile.Last();
+                //                discardPile.Remove(discardPile.Last());
+
+                //                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " picked up " + pickedUpCard.ToString());
+
+                //                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " - Enter number 0-9 to select card from hand to discard.\n");
+
+                //                while (userInput != '0' && userInput != '1' && userInput != '2' && userInput != '3'
+                //                    && userInput != '4' && userInput != '5' && userInput != '6' && userInput != '7'
+                //                    && userInput != '8' && userInput != '9')
+                //                {
+                //                    userInput = ReadKey().KeyChar;
+                //                    WriteLine();
+
+                //                    switch (userInput)
+                //                    {
+                //                        case '0':
+                //                        case '1':
+                //                        case '2':
+                //                        case '3':
+                //                        case '4':
+                //                        case '5':
+                //                        case '6':
+                //                        case '7':
+                //                        case '8':
+                //                        case '9':
+                //                            DiscardFromHand(isPlayerOneTurn, (int)Char.GetNumericValue(userInput));
+                //                            didNonDealerPickupAtFirstChance = true;
+                //                            breakSwitch = true;
+                //                            break;
+                //                        default:
+                //                            WriteLine("\nInvalid input.\n");
+                //                            break;
+                //                    }
+                //                }
+                //                break;
+
+                //            case 'n':
+                //            case 'N':
+                //                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to pass.\n");
+                //                break;
+                //            default:
+                //                WriteLine("\nInvalid input.\n");
+                //                break;
+                //        }
+                //    }
+                //}
+
+                //else
+                //{
+                didNonDealerPickupAtFirstChance = SimpleAgent_DetermineWhetherToPickupFirstCardFromDiscardPile(isPlayerOneTurn);
+                //}
+            }
+        }
+
+        private static bool SimpleAgent_DetermineWhetherToPickupFirstCardFromDiscardPile(bool isPlayerOneTurn)
+        {
+            bool didNonDealerPickupAtFirstChance;
+            var discardPileCard = discardPile.Last();
+
+            List<Card> _hand = new List<Card>();
+
+            if (isPlayerOneTurn)
+            {
+                _hand = handPlayerOne;
+            }
+            else
+            {
+                _hand = handPlayerTwo;
+            }
+
+            _hand.Add(discardPileCard);
+            _hand = DetermineMeldsInHand(_hand);
+
+            var nonMeldedCards = _hand.Where(c => !c.IsInMeld).ToList();
+            var highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
+
+            if (nonMeldedCards.Contains(discardPileCard))
+            {
+                if (highestDeadwoodCard == discardPileCard)
                 {
-                    while (userInput != 'd' && userInput != 'D' && userInput != 'n' && userInput != 'N' && breakSwitch == false)
-                    {
-                        userInput = ReadKey().KeyChar;
-                        WriteLine();
+                    _hand.Remove(discardPileCard);
+                    didNonDealerPickupAtFirstChance = false;
 
-                        switch (userInput)
-                        {
-                            case 'd':
-                            case 'D':
-                                pickedUpCard = discardPile.Last();
-                                discardPile.Remove(discardPile.Last());
-
-                                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " picked up " + pickedUpCard.ToString());
-
-                                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " - Enter number 0-9 to select card from hand to discard.\n");
-
-                                while (userInput != '0' && userInput != '1' && userInput != '2' && userInput != '3'
-                                    && userInput != '4' && userInput != '5' && userInput != '6' && userInput != '7'
-                                    && userInput != '8' && userInput != '9')
-                                {
-                                    userInput = ReadKey().KeyChar;
-                                    WriteLine();
-
-                                    switch (userInput)
-                                    {
-                                        case '0':
-                                        case '1':
-                                        case '2':
-                                        case '3':
-                                        case '4':
-                                        case '5':
-                                        case '6':
-                                        case '7':
-                                        case '8':
-                                        case '9':
-                                            DiscardFromHand(isPlayerOneTurn, (int)Char.GetNumericValue(userInput));
-                                            didNonDealerPickupAtFirstChance = true;
-                                            breakSwitch = true;
-                                            break;
-                                        default:
-                                            WriteLine("\nInvalid input.\n");
-                                            break;
-                                    }
-                                }
-                                break;
-
-                            case 'n':
-                            case 'N':
-                                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to pass.\n");
-                                break;
-                            default:
-                                WriteLine("\nInvalid input.\n");
-                                break;
-                        }
-                    }
+                    WriteLine(CurrentPlayerString(isPlayerOneTurn) + " has chosen to pass.\n");
                 }
-
                 else
                 {
-                    var discardPileCard = discardPile.Last();
+                    _hand.Remove(highestDeadwoodCard);
+                    discardPile.Remove(discardPileCard);
+                    discardPile.Add(highestDeadwoodCard);
 
-                    handPlayerTwo.Add(discardPileCard);
-                    handPlayerTwo = DetermineMeldsInHand(handPlayerTwo);
+                    didNonDealerPickupAtFirstChance = true;
 
-                    var nonMeldedCards = handPlayerTwo.Where(c => !c.IsInMeld).ToList();
-                    var highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
-
-                    if (nonMeldedCards.Contains(discardPileCard))
-                    {
-                        //highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
-
-                        if(highestDeadwoodCard == discardPileCard)
-                        {
-                            handPlayerTwo.Remove(discardPileCard);
-                            didNonDealerPickupAtFirstChance = false;
-
-                            WriteLine(CurrentPlayerString(isPlayerOneTurn) + " has chosen to pass.\n");
-                        }
-                        else
-                        {
-                            handPlayerTwo.Remove(highestDeadwoodCard);
-                            discardPile.Remove(discardPileCard);
-                            discardPile.Add(highestDeadwoodCard);
-
-                            didNonDealerPickupAtFirstChance = true;
-
-                            WriteLine(CurrentPlayerString(isPlayerOneTurn) + " picked up " + discardPileCard.ToString() + "\n");
-                        }
-
-
-                    }
-                    else
-                    {
-                        //highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
-
-                        handPlayerTwo.Remove(highestDeadwoodCard);
-                        discardPile.Remove(discardPileCard);
-                        discardPile.Add(highestDeadwoodCard);
-
-                        didNonDealerPickupAtFirstChance = true;
-
-                        WriteLine("PLAYER TWO has picked up " + discardPileCard.ToString() + "\n");
-                    }
+                    WriteLine(CurrentPlayerString(isPlayerOneTurn) + " picked up " + discardPileCard.ToString() + "\n");
                 }
             }
+            else
+            {
+                _hand.Remove(highestDeadwoodCard);
+                discardPile.Remove(discardPileCard);
+                discardPile.Add(highestDeadwoodCard);
+
+                didNonDealerPickupAtFirstChance = true;
+
+                WriteLine(CurrentPlayerString(isPlayerOneTurn) + " picked up " + discardPileCard.ToString() + "\n");
+            }
+
+            if (isPlayerOneTurn)
+            {
+                handPlayerOne = _hand;
+            }
+            else
+            {
+                handPlayerTwo = _hand;
+            }
+
+            return didNonDealerPickupAtFirstChance;
         }
 
         private static void PromptPlayerToKnock()
@@ -488,44 +530,44 @@ namespace _11242022_Gin_Rummy
             if (isGameOver) return;
             if ((isPlayerOneTurn && !canPlayerOneKnock) || (!isPlayerOneTurn && !canPlayerTwoKnock)) return;
 
-            WriteLine(CurrentPlayerString(isPlayerOneTurn) + " can knock (hand value less than 10 points) " +
-                "- press 'k' if you wish to knock, or 'd' if you wish to continue playing.\n");
+            //WriteLine(CurrentPlayerString(isPlayerOneTurn) + " can knock (hand value less than 10 points) " +
+            //    "- press 'k' if you wish to knock, or 'd' if you wish to continue playing.\n");
 
-            char userKnockInput = ' ';
+            //char userKnockInput = ' ';
 
-            if (isPlayerOneTurn)
-            {
-                while (userKnockInput != 'k' && userKnockInput != 'K' && userKnockInput != 'd' && userKnockInput != 'D')
-                {
-                    userKnockInput = ReadKey().KeyChar;
-                    WriteLine();
+            //if (isPlayerOneTurn)
+            //{
+            //    while (userKnockInput != 'k' && userKnockInput != 'K' && userKnockInput != 'd' && userKnockInput != 'D')
+            //    {
+            //        userKnockInput = ReadKey().KeyChar;
+            //        WriteLine();
 
-                    switch (userKnockInput)
-                    {
-                        case 'k':
-                        case 'K':
-                            WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to knock and end the game.\n");
-                            isGameOver = true;
-                            NonKnockerCombinesUnmatchedCardsWithKnockersMelds();
-                            UpdatePlayerScoresAfterKnocking();
-                            break;
-                        case 'd':
-                        case 'D':
-                            WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to continue playing.\n");
-                            break;
-                        default:
-                            WriteLine("\nInvalid input.\n");
-                            break;
-                    }
-                }
-            }
-            else
-            {
+            //        switch (userKnockInput)
+            //        {
+            //            case 'k':
+            //            case 'K':
+            //                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to knock and end the game.\n");
+            //                isGameOver = true;
+            //                NonKnockerCombinesUnmatchedCardsWithKnockersMelds();
+            //                UpdatePlayerScoresAfterKnocking();
+            //                break;
+            //            case 'd':
+            //            case 'D':
+            //                WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to continue playing.\n");
+            //                break;
+            //            default:
+            //                WriteLine("\nInvalid input.\n");
+            //                break;
+            //        }
+            //    }
+            //}
+            //else
+            //{
                 WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to knock and end the game.\n");
                 isGameOver = true;
                 NonKnockerCombinesUnmatchedCardsWithKnockersMelds();
                 UpdatePlayerScoresAfterKnocking();
-            }
+            //}
         }
 
         private static void NonKnockerCombinesUnmatchedCardsWithKnockersMelds()

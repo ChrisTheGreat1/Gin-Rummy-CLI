@@ -26,9 +26,18 @@ int previousWinner = 0;
 //    previousWinner = gameInfo[2];
 //}
 
-while ((playerOneScore < 100) && (playerTwoScore < 100))
+//while ((playerOneScore < 100) && (playerTwoScore < 100))
+//{
+//    var gameInfo = GameRoundSimpleAgentVsHuman.PlayRound(previousWinner);
+
+//    playerOneScore += gameInfo[0];
+//    playerTwoScore += gameInfo[1];
+//    previousWinner = gameInfo[2];
+//}
+
+for(int i = 0; i < 100; i++)
 {
-    var gameInfo = GameRoundSimpleAgent.PlayRound(previousWinner);
+    var gameInfo = GameRoundSimpleAgentVsSelf.PlayRound(previousWinner);
 
     playerOneScore += gameInfo[0];
     playerTwoScore += gameInfo[1];
