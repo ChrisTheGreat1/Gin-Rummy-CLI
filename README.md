@@ -3,8 +3,10 @@
 Command-line game of gin rummy. Three options of play exist:
 
 - Two humans play against each other
-- One human plays against a simple AI agent
+- One human plays against a simple AI agent (player one is human, player two is AI agent)
 - Two simple AI agents play against each other
+
+![Player one/two image](Img1.PNG)
 
 Play option is determined by commenting/uncommenting the relevant code section in [Program.cs](https://github.com/ConkyTheGreat/11242022-Gin-Rummy/blob/master/Program.cs)
 
