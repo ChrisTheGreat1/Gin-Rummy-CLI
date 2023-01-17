@@ -14,6 +14,12 @@ namespace _11242022_Gin_Rummy.Helpers
 {
     public static class HandMethods
     {
+        /// <summary>
+        /// Method to combine the non-knockers non-melded cards with the knockers melds. 
+        /// </summary>
+        /// <param name="handKnocker">Hand of the player that knocked.</param>
+        /// <param name="handNonKnocker">Hand of the player that did not knock.</param>
+        /// <returns>Non-knockers hand with card properties set to show they are part of a meld, if they could be combined with the knockers melds.</returns>
         public static List<Card> NonKnockerCombinesUnmatchedCardsWithKnockersMelds(List<Card> handKnocker, List<Card> handNonKnocker)
         {
             List<Card> handNonKnockerAfterDiscardingOntoOpponentMelds = handNonKnocker;
@@ -59,6 +65,7 @@ namespace _11242022_Gin_Rummy.Helpers
                     }
                 }
 
+                // Check if non-knocker cards can be added to knocker's same-rank melds
                 else
                 {
                     var rank = group.First().Rank;
@@ -78,6 +85,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return handNonKnockerAfterDiscardingOntoOpponentMelds;
         }
 
+        /// <summary>
+        /// Returns an integer denoting the value of the player's hand. 
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static int CalculateHandValue(List<Card> hand)
         {
             int handValue = 0;
@@ -94,23 +106,39 @@ namespace _11242022_Gin_Rummy.Helpers
             return handValue;
         }
 
+        /// <summary>
+        /// Returns a boolean denoting if the player can knock (ie. the player's hand value is equal to 10 or less).
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static bool CanPlayerKnock(List<Card> hand)
         {
             if (CalculateHandValue(hand) <= 10) return true;
             else return false;
         }
 
+        // Returns a boolean denoting if the player's hand meets gin criteria (ie. all cards are part of a meld).
         public static bool DetectGin(List<Card> hand)
         {
             if (hand.All(c => c.IsInMeld)) return true;
             else return false;
         }
 
+        /// <summary>
+        /// Returns the passed-in list sorted by suit then by rank in ascending order.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static List<Card> SortHandBySuitThenRank(List<Card> hand)
         {
             return hand.OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
         }
 
+        /// <summary>
+        /// Returns the passed-in list sorted by melds and non-melds.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static List<Card> SortHandWithMeldGroupings(List<Card> hand)
         {
             List<Card> sortedMelds = hand.Where(c => (c.IsInMeld == true)).OrderBy(c => c.MeldGroupIdentifier).ThenBy(c => c.Rank).ToList();
@@ -122,6 +150,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return sortedHand;
         }
 
+        /// <summary>
+        /// Returns the passed-in list with the optimal meld groupings that provide the lowest hand score.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static List<Card> DetermineMeldsInHand(List<Card> hand)
         {
             // Create copy of hand so the original input argument is not being modified
@@ -179,6 +212,12 @@ namespace _11242022_Gin_Rummy.Helpers
             return SortHandWithMeldGroupings(bestHand);
         }
 
+        /// <summary>
+        /// Determine the meld groupings that provide the lowest hand value.
+        /// </summary>
+        /// <param name="hand">Complete player hand of 10 cards.</param>
+        /// <param name="meldCombinations">List of all possible meld combinations from the player hand.</param>
+        /// <returns>List<Card> with Card properties set for the optimal meld groupings.</returns>
         private static List<Card> DetermineBestPossibleHand(List<Card> hand, List<List<List<Card>>> meldCombinations)
         {
             List<List<Card>> bestMeldCombination = new();
@@ -213,6 +252,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return bestHand;
         }
 
+        /// <summary>
+        /// Assign Card properties to all of the players cards that belong to the optimal meld groupings.
+        /// </summary>
+        /// <param name="bestMeldCombination"></param>
+        /// <returns></returns>
         private static List<List<Card>> AssignMeldPropertiesToBestCombination(List<List<Card>> bestMeldCombination)
         {
             var _bestMeldCombination = bestMeldCombination;
@@ -243,6 +287,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return _bestMeldCombination;
         }
 
+        /// <summary>
+        /// Determine all possible combinations of melds from the players hand. Combinations never include duplicate/repeated cards.
+        /// </summary>
+        /// <param name="allPossibleMelds"></param>
+        /// <returns></returns>
         private static List<List<List<Card>>> DetermineAllCombinationsOfMelds(List<List<Card>> allPossibleMelds)
         {
             List<List<List<Card>>> meldCombinations = new();
@@ -288,6 +337,13 @@ namespace _11242022_Gin_Rummy.Helpers
             return meldCombinations;
         }
 
+        /// <summary>
+        /// Given a particular meld, find all of the other meld combinations that do not contain cards that are already in the particular meld.
+        /// Return the list of meld combinations that contain only non-repeated cards.
+        /// </summary>
+        /// <param name="listOfMelds">List of meld combinations to be analyzed for repeated cards from the particular meld.</param>
+        /// <param name="meld">The particular meld.</param>
+        /// <returns>Meld combinations that do not include cards that are already found in the "meld" argument.</returns>
         private static List<List<Card>> FindMeldsThatDoNotContainDuplicateCards(List<List<Card>> listOfMelds, List<Card> meld)
         {
             List<int> listIndexesThatContainDuplicateCards = new();
@@ -321,6 +377,12 @@ namespace _11242022_Gin_Rummy.Helpers
             return meldsNotContainingDuplicateCards;
         }
 
+        /// <summary>
+        /// Return a list of all the possible same rank melds. If a 4-of-a-kind meld is passed in, this method returns a list of the original argument as well
+        /// as all of the possible 3-of-a-kind submelds that can be created. If a 3-of-a-kind is passed in, it is immediately returned.
+        /// </summary>
+        /// <param name="sameRankMelds">List of all melds that are a 3 or 4-of-a-kind.</param>
+        /// <returns></returns>
         private static List<List<Card>> DetermineAllPossibleSameRankMelds(List<List<Card>> sameRankMelds)
         {
             List<List<Card>> allPossibleSameRankMelds = new();
@@ -353,6 +415,12 @@ namespace _11242022_Gin_Rummy.Helpers
             return allPossibleSameRankMelds;
         }
 
+        /// <summary>
+        /// Return a list of all the possible sequence melds. For example, if a sequence meld of length 4 is passed in, this method returns a list of the original argument 
+        /// as well as all of the possible length-3 sequence submelds that can be created. If a length 3 sequence meld is passed in, it is immediately returned.
+        /// </summary>
+        /// <param name="longestSequenceMelds">List of all unmodified (ie. the longest possible length) sequence melds.</param>
+        /// <returns></returns>
         private static List<List<Card>> DetermineAllPossibleSequenceMelds(List<List<Card>> longestSequenceMelds)
         {
             List<List<Card>> allPossibleSequenceMelds = new();
@@ -386,6 +454,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return allPossibleSequenceMelds;
         }
 
+        /// <summary>
+        /// Return the list of all 3 or (unmodified) 4-of-a-kind melds.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         private static List<List<Card>> FindLargestSameRankMelds(List<Card> hand)
         {
             List<List<Card>> sameRankMelds = new();
@@ -404,6 +477,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return sameRankMelds;
         }
 
+        /// <summary>
+        /// Return a list of the players hand sorted into sub-lists according to suit.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         private static List<List<Card>> SortHandBySuit(List<Card> hand)
         {
             List<List<Card>> handSortedBySuit = new();
@@ -417,6 +495,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return handSortedBySuit;
         }
 
+        /// <summary>
+        /// Return a list of the longest possible sequence melds that can be obtained from the player's hand after it has been sorted by suit.
+        /// </summary>
+        /// <param name="handSortedBySuit"></param>
+        /// <returns></returns>
         private static List<List<Card>> FindLongestSequenceMelds(List<List<Card>> handSortedBySuit)
         {
             List<List<Card>> longestSequenceMelds = new();
@@ -435,6 +518,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return longestSequenceMelds;
         }
 
+        /// <summary>
+        /// Return a list of the longest possible sequence melds that can be obtained from a particular suit of the player's hand.
+        /// </summary>
+        /// <param name="sameSuitCards"></param>
+        /// <returns></returns>
         private static List<List<Card>> ExtractLongestSequence(List<Card> sameSuitCards)
         {
             List<List<Card>> melds = new();
@@ -475,6 +563,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return melds;
         }
 
+        /// <summary>
+        /// Return a readable string of all 10 cards that are in the player's hand.
+        /// </summary>
+        /// <param name="hand"></param>
+        /// <returns></returns>
         public static string HandToString(List<Card> hand)
         {
             var sb = new StringBuilder();

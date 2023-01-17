@@ -188,7 +188,6 @@ namespace _11242022_Gin_Rummy
                 WriteLine(CurrentPlayerString(isPlayerOneTurn) + " discarded " + highestDeadwoodCard.ToString() + "\n");
             }
 
-            // TODO: consider optimizing by removing unnecessary hand method calls when it's not the players turn
             DetectIfGinHasOccurred();
             DetermineIfKnockingEligible();
             PromptPlayerToKnock();
@@ -445,8 +444,6 @@ namespace _11242022_Gin_Rummy
 
                     if (nonMeldedCards.Contains(discardPileCard))
                     {
-                        //highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
-
                         if(highestDeadwoodCard == discardPileCard)
                         {
                             handPlayerTwo.Remove(discardPileCard);
@@ -469,8 +466,6 @@ namespace _11242022_Gin_Rummy
                     }
                     else
                     {
-                        //highestDeadwoodCard = nonMeldedCards.OrderByDescending(c => c.Rank).First();
-
                         handPlayerTwo.Remove(highestDeadwoodCard);
                         discardPile.Remove(discardPileCard);
                         discardPile.Add(highestDeadwoodCard);

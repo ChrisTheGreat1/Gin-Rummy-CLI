@@ -196,7 +196,6 @@ namespace _11242022_Gin_Rummy
                 handPlayerTwo = _hand;
             }
 
-            // TODO: consider optimizing by removing unnecessary hand method calls when it's not the players turn
             DetectIfGinHasOccurred();
             DetermineIfKnockingEligible();
             PromptPlayerToKnock();

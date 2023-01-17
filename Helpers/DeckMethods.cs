@@ -10,6 +10,10 @@ namespace _11242022_Gin_Rummy.Helpers
 {
     public static class DeckMethods
     {
+        /// <summary>
+        /// Create deck of 52 cards.
+        /// </summary>
+        /// <returns></returns>
         public static List<Card> CreateDeck()
         {
             List<Card> deck = new();
@@ -29,6 +33,11 @@ namespace _11242022_Gin_Rummy.Helpers
             return deck;
         }
 
+        /// <summary>
+        /// Returns a shuffled deck of 52 cards. Utilizes the Fisher-Yates shuffle algorithm.
+        /// </summary>
+        /// <param name="deck"></param>
+        /// <returns></returns>
         public static List<Card> ShuffleDeck(List<Card> deck)
         {
             // Fisher-Yates shuffle algorithm

@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using _11242022_Gin_Rummy.Enums;
+﻿using _11242022_Gin_Rummy.Enums;
 using _11242022_Gin_Rummy.Helpers;
 using static _11242022_Gin_Rummy.Helpers.DeckMethods;
 using static _11242022_Gin_Rummy.Helpers.HandMethods;
@@ -10,12 +9,13 @@ using System.Text;
 using static System.Console;
 using _11242022_Gin_Rummy;
 
-// TODO: hotkey for displaying hand history
-// TODO: counter for number of rounds played in current game
-
 int playerOneScore = 0;
 int playerTwoScore = 0;
 int previousWinner = 0;
+
+// ------------------------------------------------------------------------------
+
+// Uncomment this code block to have two human players play against each other
 
 //while ((playerOneScore < 100) && (playerTwoScore < 100))
 //{
@@ -26,23 +26,31 @@ int previousWinner = 0;
 //    previousWinner = gameInfo[2];
 //}
 
-//while ((playerOneScore < 100) && (playerTwoScore < 100))
-//{
-//    var gameInfo = GameRoundSimpleAgentVsHuman.PlayRound(previousWinner);
+// ------------------------------------------------------------------------------
 
-//    playerOneScore += gameInfo[0];
-//    playerTwoScore += gameInfo[1];
-//    previousWinner = gameInfo[2];
-//}
+// Uncomment this code block to have a human play agains the simple AI agent
 
-for(int i = 0; i < 1000; i++)
+while ((playerOneScore < 100) && (playerTwoScore < 100))
 {
-    var gameInfo = GameRoundSimpleAgentVsSelf.PlayRound(previousWinner);
+    var gameInfo = GameRoundSimpleAgentVsHuman.PlayRound(previousWinner);
 
     playerOneScore += gameInfo[0];
     playerTwoScore += gameInfo[1];
     previousWinner = gameInfo[2];
 }
+
+// ------------------------------------------------------------------------------
+
+// Uncomment this code block to have two simple AI agents play against each other
+
+//for(int i = 0; i < 1000; i++)
+//{
+//    var gameInfo = GameRoundSimpleAgentVsSelf.PlayRound(previousWinner);
+
+//    playerOneScore += gameInfo[0];
+//    playerTwoScore += gameInfo[1];
+//    previousWinner = gameInfo[2];
+//}
 
 WriteLine("\nFINAL SCORES:\n");
 WriteLine("Player one score: " + playerOneScore);
