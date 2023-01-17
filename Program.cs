@@ -1,13 +1,5 @@
-﻿using _11242022_Gin_Rummy.Enums;
-using _11242022_Gin_Rummy.Helpers;
-using static _11242022_Gin_Rummy.Helpers.DeckMethods;
-using static _11242022_Gin_Rummy.Helpers.HandMethods;
-using static _11242022_Gin_Rummy.Helpers.GameLogicMethods;
-using _11242022_Gin_Rummy.Models;
-using System;
-using System.Text;
+﻿using _11242022_Gin_Rummy;
 using static System.Console;
-using _11242022_Gin_Rummy;
 
 int playerOneScore = 0;
 int playerTwoScore = 0;
