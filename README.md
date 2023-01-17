@@ -1,4 +1,4 @@
-# 11242022-Gin-Rummy
+# Gin-Rummy-CLI
 
 Command-line game of gin rummy. Three options of play exist:
 
