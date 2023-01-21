@@ -20,3 +20,4 @@ The simple AI agent operates on this ruleset:
 - If the card on the discard pile completes a meld, pick it up. Otherwise pick up from the deck.
 - Always discard the card that has the highest value that is not currently in a meld.  
 - During the turn immediately after the cards are dealt out, if the discard pile card has a lower value than the highest value card currently in the agent's hand, then pick it up and discard the highest value card.
+- Always knock as soon as possible

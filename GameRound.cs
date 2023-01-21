@@ -95,6 +95,8 @@ namespace _11242022_Gin_Rummy
 
             WriteLine("Press any key to continue.");
             ReadKey();
+            WriteLine();
+            WriteLine();
 
             List<int> endOfGameInfo = new();
             endOfGameInfo.Add(playerOneRoundScore);
@@ -359,8 +361,6 @@ namespace _11242022_Gin_Rummy
             handPlayerOne = SortHandWithMeldGroupings(handPlayerOne);
             handPlayerTwo = SortHandWithMeldGroupings(handPlayerTwo);
 
-            Clear();
-
             WriteLine("---------------------------------------");
             if (canPlayerTwoKnock) WriteLine("****PLAYER TWO CAN KNOCK****");
             WriteLine(HandToString(handPlayerTwo));
@@ -395,7 +395,7 @@ namespace _11242022_Gin_Rummy
                 {
                     case 'k':
                     case 'K':
-                        WriteLine("\n" + CurrentPlayerString(isPlayerOneTurn) + " has chosen to knock and end the game.\n");
+                        WriteLine(CurrentPlayerString(isPlayerOneTurn) + " has chosen to knock and end the game.\n"); 
                         isGameOver = true;
                         NonKnockerCombinesUnmatchedCardsWithKnockersMelds();
                         UpdatePlayerScoresAfterKnocking();

@@ -196,8 +196,6 @@ namespace _11242022_Gin_Rummy
             handPlayerOne = SortHandWithMeldGroupings(handPlayerOne);
             handPlayerTwo = SortHandWithMeldGroupings(handPlayerTwo);
 
-            //Clear();
-
             WriteLine("---------------------------------------");
             if (canPlayerTwoKnock) WriteLine("****PLAYER TWO CAN KNOCK****");
             WriteLine(HandToString(handPlayerTwo));

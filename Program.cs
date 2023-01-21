@@ -44,6 +44,8 @@ while ((playerOneScore < 100) && (playerTwoScore < 100))
 //    previousWinner = gameInfo[2];
 //}
 
+// ------------------------------------------------------------------------------
+
 WriteLine("\nFINAL SCORES:\n");
 WriteLine("Player one score: " + playerOneScore);
 WriteLine("Player two score: " + playerTwoScore);
